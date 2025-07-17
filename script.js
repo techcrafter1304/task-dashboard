@@ -1,26 +1,47 @@
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-function renderTasks() {
-  ["todo", "inprogress", "done"].forEach(status => {
-    const ul = document.getElementById(`${status}-list`);
-    ul.innerHTML = "";
-    tasks.filter(t => t.status === status).forEach(task => {
-      const li = document.createElement("li");
-      li.textContent = `${task.title} (${task.priority}) - Due: ${task.deadline}`;
-      ul.appendChild(li);
-    });
-  });
+function allowDrop(ev) {
+  ev.preventDefault();
 }
 
-document.getElementById("task-form").addEventListener("submit", e => {
-  e.preventDefault();
-  const title = document.getElementById("task-title").value;
-  const deadline = document.getElementById("task-deadline").value;
-  const priority = document.getElementById("task-priority").value;
-  tasks.push({ title, deadline, priority, status: "todo" });
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  renderTasks();
-  e.target.reset();
-});
+function drag(ev) {
+  ev.dataTransfer.setData("text", ev.target.id);
+}
 
-renderTasks();
+function drop(ev) {
+  ev.preventDefault();
+  const data = ev.dataTransfer.getData("text");
+  const draggedElement = document.getElementById(data);
+  const targetList = ev.target.closest(".column").querySelector(".task-list");
+
+  if (draggedElement && targetList) {
+    targetList.appendChild(draggedElement);
+  }
+}
+
+function addTask() {
+  const taskInput = document.getElementById("newTask");
+  const taskText = taskInput.value.trim();
+  if (taskText === "") return;
+
+  const taskList = document.getElementById("todo");
+  const taskId = "task-" + Date.now();
+
+  const li = document.createElement("li");
+  li.className = "task";
+  li.id = taskId;
+  li.draggable = true;
+  li.ondragstart = drag;
+
+  const taskSpan = document.createElement("span");
+  taskSpan.textContent = taskText;
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "delete-btn";
+  deleteBtn.textContent = "✕";
+  deleteBtn.onclick = () => li.remove();
+
+  li.appendChild(taskSpan);
+  li.appendChild(deleteBtn);
+
+  taskList.appendChild(li);
+  taskInput.value = "";
+}
